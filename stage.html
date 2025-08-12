@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>2025 아이디어페스티벌 · QR+실시간 결과(무대화면)</title>
+<title>2025 아이디어페스티벌 · QR+실시간 결과(무대화면·QR버전)</title>
 <meta name="theme-color" content="#0ea5e9" />
 <style>
   :root{ --brand:#0ea5e9; --bg:#070a12; --panel:#0d1424; --text:#e8eefc; --muted:#96a9c4; }
@@ -17,6 +18,7 @@
   .stage{display:grid;grid-template-columns:520px 1fr;gap:14px;padding:16px;height:calc(100vh - 76px)}
   .panel{background:var(--panel);border:1px solid #1b2744;border-radius:16px;padding:16px;overflow:hidden}
   .qrbox{display:flex;align-items:center;justify-content:center;height:100%}
+  .qrbox img{width:100%;max-width:480px;height:auto;background:#fff;border-radius:16px;padding:12px}
   .bars{display:flex;flex-direction:column;gap:16px;height:100%}
   .bars h2{margin:0 0 6px 0;font-size:28px}
   .list{display:flex;flex-direction:column;gap:12px;overflow:auto;padding-right:4px}
@@ -25,7 +27,7 @@
   .track{height:26px;background:#0a0f1c;border:1px solid #1b2744;border-radius:999px;overflow:hidden}
   .fill{height:100%;background:linear-gradient(90deg,var(--brand),#60a5fa)}
   .pct{font-size:20px;text-align:right;font-variant-numeric:tabular-nums}
-  .meta{display:flex;align-items:center;justify-content:space-between;color:#96a9c4;margin-bottom:8px}
+  .meta{display:flex;align-items:center;justify-content:space-between;color:var(--muted);margin-bottom:8px}
   .controls{display:flex;gap:8px}
   button{appearance:none;border:0;border-radius:12px;background:#334155;color:white;padding:10px 12px;font-weight:800;cursor:pointer}
   .primary{background:var(--brand)}
@@ -39,7 +41,7 @@
       <div class="logo">IF</div>
       <div>
         <h1>2025 아이디어페스티벌 · 현장 투표</h1>
-        <div style="color:#96a9c4;font-size:13px">좌측 주소(또는 QR)를 통해 투표 · 우측 실시간 결과</div>
+        <div style="color:#96a9c4;font-size:13px">왼쪽 QR을 스캔해 투표 · 오른쪽 실시간 결과</div>
       </div>
     </div>
     <div class="controls">
@@ -50,11 +52,8 @@
   </header>
 
   <div class="stage">
-    <div class="panel qrbox" id="qrPanel">
-      <div style="text-align:center">
-        <div style="font-size:14px;color:#96a9c4;margin-bottom:8px">이 주소를 QR로 만들어 스크린에 띄우세요</div>
-        <div id="voteUrlBox" style="background:#fff;color:#000;padding:14px;border-radius:12px;word-break:break-all;max-width:480px"></div>
-      </div>
+    <div class="panel qrbox">
+      <img id="qrImg" alt="투표용 QR" />
     </div>
     <div class="panel">
       <div class="bars">
@@ -75,6 +74,14 @@ function makeVoteUrl(){
   url.search = ''; url.hash = '';
   return url.toString();
 }
+function setQR(){
+  const voteUrl = makeVoteUrl();
+  const qrSrc = 'https://chart.googleapis.com/chart?cht=qr&chs=480x480&chl=' + encodeURIComponent(voteUrl);
+  document.getElementById('qrImg').src = qrSrc;
+}
+setQR();
+
+// Results demo (localStorage)
 const TEAMS = [
   {id:"A", name:"Team ATLAS"},
   {id:"B", name:"Team BOLT"},
@@ -104,6 +111,7 @@ function render(){
   progress.textContent = total(getData());
 }
 render();
+
 let pulse=null;
 document.getElementById('start').addEventListener('click',()=>{
   if(pulse) return;
@@ -117,7 +125,6 @@ document.getElementById('start').addEventListener('click',()=>{
 });
 document.getElementById('stop').addEventListener('click',()=>{ if(pulse){clearInterval(pulse); pulse=null;} });
 document.getElementById('reset').addEventListener('click',()=>{ localStorage.removeItem(DATA_KEY); render(); });
-document.getElementById('voteUrlBox').textContent = makeVoteUrl();
 </script>
 </body>
 </html>
