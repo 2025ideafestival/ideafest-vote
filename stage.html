@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>2025 아이디어페스티벌 · QR+실시간 결과(무대화면)</title>
+<meta name="theme-color" content="#0ea5e9" />
+<style>
+  :root{ --brand:#0ea5e9; --bg:#070a12; --panel:#0d1424; --text:#e8eefc; --muted:#96a9c4; }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,Pretendard,Segoe UI,Roboto,Helvetica,Arial}
+  .wrap{display:grid;grid-template-rows:auto 1fr;min-height:100vh}
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:#0a1020;border-bottom:1px solid #1b2744}
+  .title{display:flex;align-items:center;gap:10px}
+  .logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--brand),#38bdf8);display:flex;align-items:center;justify-content:center;font-weight:900}
+  h1{font-size:22px;margin:0}
+  .stage{display:grid;grid-template-columns:520px 1fr;gap:14px;padding:16px;height:calc(100vh - 76px)}
+  .panel{background:var(--panel);border:1px solid #1b2744;border-radius:16px;padding:16px;overflow:hidden}
+  .qrbox{display:flex;align-items:center;justify-content:center;height:100%}
+  .bars{display:flex;flex-direction:column;gap:16px;height:100%}
+  .bars h2{margin:0 0 6px 0;font-size:28px}
+  .list{display:flex;flex-direction:column;gap:12px;overflow:auto;padding-right:4px}
+  .bar{display:grid;grid-template-columns:260px 1fr 120px;gap:12px;align-items:center}
+  .label{font-size:20px}
+  .track{height:26px;background:#0a0f1c;border:1px solid #1b2744;border-radius:999px;overflow:hidden}
+  .fill{height:100%;background:linear-gradient(90deg,var(--brand),#60a5fa)}
+  .pct{font-size:20px;text-align:right;font-variant-numeric:tabular-nums}
+  .meta{display:flex;align-items:center;justify-content:space-between;color:#96a9c4;margin-bottom:8px}
+  .controls{display:flex;gap:8px}
+  button{appearance:none;border:0;border-radius:12px;background:#334155;color:white;padding:10px 12px;font-weight:800;cursor:pointer}
+  .primary{background:var(--brand)}
+  @media (max-width:1100px){ .stage{grid-template-columns:1fr;grid-auto-rows:auto 1fr} .bar{grid-template-columns:160px 1fr 80px} .label,.pct{font-size:16px} .bars h2{font-size:22px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="title">
+      <div class="logo">IF</div>
+      <div>
+        <h1>2025 아이디어페스티벌 · 현장 투표</h1>
+        <div style="color:#96a9c4;font-size:13px">좌측 주소(또는 QR)를 통해 투표 · 우측 실시간 결과</div>
+      </div>
+    </div>
+    <div class="controls">
+      <button id="start" class="primary">데모 시작</button>
+      <button id="stop">데모 정지</button>
+      <button id="reset">데모 리셋</button>
+    </div>
+  </header>
+
+  <div class="stage">
+    <div class="panel qrbox" id="qrPanel">
+      <div style="text-align:center">
+        <div style="font-size:14px;color:#96a9c4;margin-bottom:8px">이 주소를 QR로 만들어 스크린에 띄우세요</div>
+        <div id="voteUrlBox" style="background:#fff;color:#000;padding:14px;border-radius:12px;word-break:break-all;max-width:480px"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="bars">
+        <div class="meta">
+          <h2 style="margin:0">실시간 순위 그래프</h2>
+          <div>집계 표 수: <strong id="progress">0</strong></div>
+        </div>
+        <div class="list" id="list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function makeVoteUrl(){
+  const url = new URL(window.location.href);
+  url.pathname = url.pathname.replace(/[^\/]+$/, 'index.html');
+  url.search = ''; url.hash = '';
+  return url.toString();
+}
+const TEAMS = [
+  {id:"A", name:"Team ATLAS"},
+  {id:"B", name:"Team BOLT"},
+  {id:"C", name:"Team COBALT"},
+  {id:"D", name:"Team DRIFT"},
+  {id:"E", name:"Team EMBER"},
+  {id:"F", name:"Team FLUX"},
+];
+const DATA_KEY='if2025_results';
+function getData(){ try{return JSON.parse(localStorage.getItem(DATA_KEY))||{}}catch(e){return {}} }
+function setData(o){ localStorage.setItem(DATA_KEY, JSON.stringify(o)); }
+function total(o){ return Object.values(o).reduce((a,b)=>a+b,0); }
+const list = document.getElementById('list');
+const progress = document.getElementById('progress');
+function render(){
+  const d = getData();
+  const tot = Math.max(1,total(d));
+  list.innerHTML = '';
+  TEAMS.forEach(t=>{
+    const v = d[t.id]||0;
+    const pct = Math.round((v/tot)*100);
+    const row = document.createElement('div');
+    row.className='bar';
+    row.innerHTML = `<div class="label">${t.name}</div><div class="track"><div class="fill" style="width:${pct}%"></div></div><div class="pct">${pct}%</div>`;
+    list.appendChild(row);
+  });
+  progress.textContent = total(getData());
+}
+render();
+let pulse=null;
+document.getElementById('start').addEventListener('click',()=>{
+  if(pulse) return;
+  pulse = setInterval(()=>{
+    const t = TEAMS[Math.floor(Math.random()*TEAMS.length)];
+    const d = getData();
+    d[t.id] = (d[t.id]||0)+1;
+    setData(d);
+    render();
+  }, 900);
+});
+document.getElementById('stop').addEventListener('click',()=>{ if(pulse){clearInterval(pulse); pulse=null;} });
+document.getElementById('reset').addEventListener('click',()=>{ localStorage.removeItem(DATA_KEY); render(); });
+document.getElementById('voteUrlBox').textContent = makeVoteUrl();
+</script>
+</body>
+</html>

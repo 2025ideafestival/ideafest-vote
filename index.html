@@ -1,0 +1,91 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>2025 아이디어페스티벌 · 관객 투표</title>
+<meta name="theme-color" content="#0ea5e9" />
+<style>
+  :root{ --brand:#0ea5e9; --brand-2:#22c55e; --bg:#070a12; --panel:#0e1422; --muted:#9fb3c8; --text:#e8eefc; }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,Pretendard,Segoe UI,Roboto,Helvetica,Arial}
+  .wrap{max-width:720px;margin:0 auto;padding:20px}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--brand),#38bdf8);display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff}
+  h1{font-size:18px;margin:0}
+  .muted{color:var(--muted)}
+  .panel{background:#0b1220;border:1px solid #172038;border-radius:16px;padding:16px}
+  .grid{display:grid;grid-template-columns:1fr;gap:12px}
+  .card{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#0b1220;border:1px solid #172038;border-radius:14px;padding:14px}
+  .card h3{margin:0;font-size:16px}
+  .card p{margin:0;color:#9fb3c8;font-size:13px}
+  .radio{transform:scale(1.35)}
+  .btn{appearance:none;border:0;border-radius:12px;padding:14px 16px;font-weight:800;color:#fff;background:var(--brand);width:100%;font-size:16px}
+  .btn:disabled{opacity:.6}
+  .row{display:flex;gap:10px;margin-top:10px}
+  .row .btn{flex:1}
+  .notice{font-size:13px;background:#0b1a2a;border:1px dashed #20314c;border-radius:12px;padding:12px;color:#b8c7db}
+  footer{margin-top:14px;text-align:center;color:#5f7391;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">IF</div>
+    <div>
+      <h1>2025 아이디어페스티벌 · 관객 투표</h1>
+      <div class="muted">데모 전용 · 실제 서버 미연동</div>
+    </div>
+  </header>
+
+  <div class="panel">
+    <h2 style="margin:0 0 10px 0">팀 선택</h2>
+    <div class="notice" id="lockNotice" style="display:none">이 기기에서 이미 투표가 완료되었습니다. 결과 화면으로 이동합니다.</div>
+    <form id="voteForm">
+      <div class="grid" id="teamGrid"></div>
+      <div class="row">
+        <button class="btn" id="submitBtn" type="submit" disabled>투표 제출</button>
+        <a class="btn" id="resultsBtn" style="text-align:center;background:#22c55e" href="stage.html">결과화면</a>
+      </div>
+    </form>
+    <div class="notice" style="margin-top:10px">데모는 브라우저당 1회만 투표 가능(로컬 저장). 실제 행사에서는 서버 인증·중복 방지 적용.</div>
+  </div>
+  <footer>© 2025 아이디어페스티벌 · Demo v1</footer>
+</div>
+
+<script>
+const TEAMS = [
+  {id:"A", name:"Team ATLAS", title:"Urban EV Sharing"},
+  {id:"B", name:"Team BOLT", title:"Modular Battery Pack"},
+  {id:"C", name:"Team COBALT", title:"AI-Driven Road Safety"},
+  {id:"D", name:"Team DRIFT", title:"Micro-Mobility Hub"},
+  {id:"E", name:"Team EMBER", title:"Hydrogen Retrofit Kit"},
+  {id:"F", name:"Team FLUX", title:"Smart Parking Mesh"},
+];
+const LOCK='if2025_voted', DATA='if2025_results';
+function getData(){ try{return JSON.parse(localStorage.getItem(DATA))||{}}catch(e){return {}} }
+function setData(o){ localStorage.setItem(DATA, JSON.stringify(o)); }
+function getLock(){ return localStorage.getItem(LOCK); }
+function setLock(v){ localStorage.setItem(LOCK, v); }
+const grid=document.getElementById('teamGrid');
+TEAMS.forEach(t=>{
+  const el=document.createElement('label');
+  el.className='card';
+  el.innerHTML = `<div><h3>${t.name}</h3><p>${t.title}</p></div><input class="radio" type="radio" name="vote" value="${t.id}" />`;
+  grid.appendChild(el);
+});
+const form=document.getElementById('voteForm'); const submit=document.getElementById('submitBtn');
+form.addEventListener('change', e=>{ if(e.target.name==='vote') submit.disabled=false; });
+form.addEventListener('submit', e=>{
+  e.preventDefault();
+  const fd=new FormData(form); const choice=fd.get('vote');
+  if(!choice) return;
+  if(getLock()){ alert('이미 투표가 완료되었습니다.'); location.href='stage.html'; return; }
+  const d=getData(); d[choice]=(d[choice]||0)+1; setData(d); setLock(choice);
+  alert('투표가 완료되었습니다. 감사합니다!'); location.href='stage.html';
+});
+if(getLock()){ document.getElementById('lockNotice').style.display='block'; }
+</script>
+</body>
+</html>
